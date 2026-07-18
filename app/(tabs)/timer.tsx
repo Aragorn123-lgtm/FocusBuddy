@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFocusTimer } from '@/hooks/use-focus-timer';
+import { calculateCoins } from '@/utils/coins';
 
 function formatTime(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
@@ -33,7 +34,10 @@ export default function TimerScreen() {
       )}
 
       {status === 'stopped' && (
-        <ThemedText style={styles.result}>Gefocust: {focusedMinutes} min</ThemedText>
+        <>
+          <ThemedText style={styles.result}>Gefocust: {focusedMinutes} min</ThemedText>
+          <ThemedText style={styles.result}>Coins verdiend: {calculateCoins(focusedMinutes)}</ThemedText>
+        </>
       )}
     </ThemedView>
   );
