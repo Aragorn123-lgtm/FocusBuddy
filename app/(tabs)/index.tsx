@@ -33,6 +33,8 @@ const MOCK_ALLOWED_APPS: AllowedApp[] = [
 const VISIBLE_ALLOWED_APPS = MOCK_ALLOWED_APPS.slice(0, 3);
 const HIDDEN_ALLOWED_APPS_COUNT = MOCK_ALLOWED_APPS.length - VISIBLE_ALLOWED_APPS.length;
 
+const DURATION_PRESETS = [15, 25, 45, 60];
+
 function formatTime(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -51,10 +53,26 @@ export default function HomeScreen() {
   const { status, focusedSeconds, focusedMinutes, start, stop } = useFocusTimer();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [focusText, setFocusText] = useState('');
-  const [mode] = useState<FocusMode>('stopwatch');
+  const [mode, setMode] = useState<FocusMode>('stopwatch');
+  const [durationMinutes, setDurationMinutes] = useState(25);
+  const [modePickerVisible, setModePickerVisible] = useState(false);
 
   const handleCancel = () => {
     setConfirmVisible(false);
+  };
+
+  const handleCancelModePicker = () => {
+    setModePickerVisible(false);
+  };
+
+  const handleSelectStopwatch = () => {
+    setMode('stopwatch');
+    setModePickerVisible(false);
+  };
+
+  const handleSelectDuration = (minutes: number) => {
+    setDurationMinutes(minutes);
+    setModePickerVisible(false);
   };
 
   const handleStartSession = () => {
@@ -112,10 +130,12 @@ export default function HomeScreen() {
             <View style={styles.cardRow}>
               <Pressable
                 style={[styles.card, { backgroundColor: surfaceColor }]}
-                onPress={() => console.log('Open mode picker', mode)}>
+                onPress={() => setModePickerVisible(true)}>
                 <View style={styles.cardHeaderRow}>
                   <IconSymbol name="timer" size={18} color={textColor} />
-                  <ThemedText style={styles.cardHeaderText}>{MODE_LABELS[mode]}</ThemedText>
+                  <ThemedText style={styles.cardHeaderText}>
+                    {mode === 'timer' ? `${MODE_LABELS.timer} · ${durationMinutes}m` : MODE_LABELS.stopwatch}
+                  </ThemedText>
                 </View>
                 <ThemedText style={[styles.cardLabel, { color: mutedColor }]}>MODE</ThemedText>
               </Pressable>
@@ -153,6 +173,57 @@ export default function HomeScreen() {
               onPress={() => console.log('Edit settings')}>
               Edit settings
             </ThemedText>
+          </ThemedView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={modePickerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={handleCancelModePicker}>
+        <View style={styles.sheetWrapper}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleCancelModePicker} />
+          <ThemedView style={[styles.sheet, { backgroundColor: sheetBackground }]}>
+            <View style={styles.dragHandle} />
+
+            <ThemedText type="subtitle" style={styles.sheetTitle}>
+              Mode
+            </ThemedText>
+
+            <Pressable
+              style={[styles.modeRow, { backgroundColor: surfaceColor }]}
+              onPress={handleSelectStopwatch}>
+              <ThemedText style={styles.cardHeaderText}>Stopwatch</ThemedText>
+              {mode === 'stopwatch' && <IconSymbol name="checkmark" size={18} color={tint} />}
+            </Pressable>
+
+            <Pressable style={[styles.modeRow, { backgroundColor: surfaceColor }]} onPress={() => setMode('timer')}>
+              <ThemedText style={styles.cardHeaderText}>Timer</ThemedText>
+              {mode === 'timer' && <IconSymbol name="checkmark" size={18} color={tint} />}
+            </Pressable>
+
+            {mode === 'timer' && (
+              <View style={styles.durationRow}>
+                {DURATION_PRESETS.map((minutes) => (
+                  <Pressable
+                    key={minutes}
+                    style={[
+                      styles.durationPreset,
+                      { backgroundColor: minutes === durationMinutes ? tint : surfaceColor },
+                    ]}
+                    onPress={() => handleSelectDuration(minutes)}>
+                    <ThemedText
+                      style={[
+                        styles.durationPresetText,
+                        { color: minutes === durationMinutes ? onTintColor : textColor },
+                      ]}>
+                      {minutes}m
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </ThemedView>
         </View>
       </Modal>
@@ -282,6 +353,28 @@ const styles = StyleSheet.create({
   },
   editSettingsLink: {
     textAlign: 'center',
+    fontSize: 14,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  durationRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  durationPreset: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  durationPresetText: {
+    fontWeight: '600',
     fontSize: 14,
   },
 });

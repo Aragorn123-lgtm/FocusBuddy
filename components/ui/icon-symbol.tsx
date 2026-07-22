@@ -21,6 +21,7 @@ const MAPPING = {
   'bag.fill': 'shopping-bag',
   'person.fill': 'person',
   timer: 'timer',
+  checkmark: 'check',
 } as IconMapping;
 
 /**
