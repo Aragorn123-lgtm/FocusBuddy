@@ -32,6 +32,12 @@ const MOCK_ALLOWED_APPS: AllowedApp[] = [
 ];
 const DURATION_PRESETS = [15, 25, 45, 60];
 
+type ActiveSessionContext = {
+  focusLabel: string;
+  mode: FocusMode;
+  durationMinutes: number | null;
+};
+
 function formatTime(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -55,6 +61,7 @@ export default function HomeScreen() {
   const [modePickerVisible, setModePickerVisible] = useState(false);
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>(MOCK_ALLOWED_APPS.map((app) => app.id));
   const [appPickerVisible, setAppPickerVisible] = useState(false);
+  const [activeSession, setActiveSession] = useState<ActiveSessionContext | null>(null);
 
   const selectedApps = MOCK_ALLOWED_APPS.filter((app) => selectedAppIds.includes(app.id));
   const visibleApps = selectedApps.slice(0, 3);
@@ -89,6 +96,11 @@ export default function HomeScreen() {
   };
 
   const handleStartSession = () => {
+    setActiveSession({
+      focusLabel: focusText.trim() || 'Focus session',
+      mode,
+      durationMinutes: mode === 'timer' ? durationMinutes : null,
+    });
     setConfirmVisible(false);
     start();
   };
@@ -99,6 +111,14 @@ export default function HomeScreen() {
         {status === 'running' ? (
           <View style={styles.timerBlock}>
             <ThemedText type="subtitle">FocusTime</ThemedText>
+            {activeSession && (
+              <ThemedText style={[styles.sessionContext, { color: mutedColor }]}>
+                {activeSession.focusLabel} ·{' '}
+                {activeSession.mode === 'timer'
+                  ? `${MODE_LABELS.timer} · ${activeSession.durationMinutes}m`
+                  : MODE_LABELS.stopwatch}
+              </ThemedText>
+            )}
             <ThemedText style={styles.time}>{formatTime(focusedSeconds)}</ThemedText>
             <Pressable style={[styles.button, { backgroundColor: tint }]} onPress={stop}>
               <ThemedText style={[styles.buttonText, { color: onTintColor }]}>Stop</ThemedText>
@@ -112,6 +132,11 @@ export default function HomeScreen() {
 
         {status === 'stopped' && (
           <>
+            {activeSession && (
+              <ThemedText style={[styles.result, { color: mutedColor }]}>
+                Gefocust op: {activeSession.focusLabel}
+              </ThemedText>
+            )}
             <ThemedText style={styles.result}>Gefocust: {focusedMinutes} min</ThemedText>
             <ThemedText style={styles.result}>Coins verdiend: {calculateCoins(focusedMinutes)}</ThemedText>
           </>
@@ -315,6 +340,9 @@ const styles = StyleSheet.create({
   },
   result: {
     marginTop: 8,
+  },
+  sessionContext: {
+    fontSize: 13,
   },
   sheetWrapper: {
     flex: 1,
