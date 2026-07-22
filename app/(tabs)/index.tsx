@@ -17,8 +17,13 @@ function formatTime(totalSeconds: number): string {
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const tint = Colors[colorScheme ?? 'light'].tint;
+  const onTintColor = Colors[colorScheme ?? 'light'].background;
   const { status, focusedSeconds, focusedMinutes, start, stop } = useFocusTimer();
   const [confirmVisible, setConfirmVisible] = useState(false);
+
+  const handleCancel = () => {
+    setConfirmVisible(false);
+  };
 
   const handleConfirmStart = () => {
     setConfirmVisible(false);
@@ -27,45 +32,44 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">Home</ThemedText>
-
-      {status === 'running' ? (
-        <View style={styles.timerBlock}>
-          <ThemedText type="subtitle">FocusTime</ThemedText>
-          <ThemedText style={styles.time}>{formatTime(focusedSeconds)}</ThemedText>
-          <Pressable style={[styles.button, { backgroundColor: tint }]} onPress={stop}>
-            <ThemedText style={styles.buttonText}>Stop</ThemedText>
+      <View style={styles.focusBlock}>
+        {status === 'running' ? (
+          <View style={styles.timerBlock}>
+            <ThemedText type="subtitle">FocusTime</ThemedText>
+            <ThemedText style={styles.time}>{formatTime(focusedSeconds)}</ThemedText>
+            <Pressable style={[styles.button, { backgroundColor: tint }]} onPress={stop}>
+              <ThemedText style={[styles.buttonText, { color: onTintColor }]}>Stop</ThemedText>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable style={[styles.button, { backgroundColor: tint }]} onPress={() => setConfirmVisible(true)}>
+            <ThemedText style={[styles.buttonText, { color: onTintColor }]}>Focus</ThemedText>
           </Pressable>
-        </View>
-      ) : (
-        <Pressable style={[styles.button, { backgroundColor: tint }]} onPress={() => setConfirmVisible(true)}>
-          <ThemedText style={styles.buttonText}>Focus</ThemedText>
-        </Pressable>
-      )}
+        )}
 
-      {status === 'stopped' && (
-        <>
-          <ThemedText style={styles.result}>Gefocust: {focusedMinutes} min</ThemedText>
-          <ThemedText style={styles.result}>Coins verdiend: {calculateCoins(focusedMinutes)}</ThemedText>
-        </>
-      )}
+        {status === 'stopped' && (
+          <>
+            <ThemedText style={styles.result}>Gefocust: {focusedMinutes} min</ThemedText>
+            <ThemedText style={styles.result}>Coins verdiend: {calculateCoins(focusedMinutes)}</ThemedText>
+          </>
+        )}
+      </View>
 
       <Modal
         visible={confirmVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setConfirmVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <ThemedView style={styles.modalCard}>
+        onRequestClose={handleCancel}>
+        <View style={styles.sheetWrapper}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleCancel} />
+          <ThemedView style={styles.sheet}>
             <ThemedText type="subtitle">Start Focusing?</ThemedText>
-            <View style={styles.modalButtonRow}>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonSecondary]}
-                onPress={() => setConfirmVisible(false)}>
-                <ThemedText style={styles.buttonText}>No</ThemedText>
+            <View style={styles.sheetButtonRow}>
+              <Pressable style={[styles.sheetButton, styles.sheetButtonSecondary]} onPress={handleCancel}>
+                <ThemedText style={[styles.buttonText, { color: '#fff' }]}>No</ThemedText>
               </Pressable>
-              <Pressable style={[styles.modalButton, { backgroundColor: tint }]} onPress={handleConfirmStart}>
-                <ThemedText style={styles.buttonText}>Yes</ThemedText>
+              <Pressable style={[styles.sheetButton, { backgroundColor: tint }]} onPress={handleConfirmStart}>
+                <ThemedText style={[styles.buttonText, { color: onTintColor }]}>Yes</ThemedText>
               </Pressable>
             </View>
           </ThemedView>
@@ -78,9 +82,14 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  focusBlock: {
+    position: 'absolute',
+    bottom: '25%',
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
+    gap: 8,
   },
   timerBlock: {
     alignItems: 'center',
@@ -96,36 +105,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
     fontWeight: '600',
     fontSize: 16,
   },
   result: {
     marginTop: 8,
   },
-  modalOverlay: {
+  sheetWrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
   },
-  modalCard: {
-    width: '80%',
-    borderRadius: 16,
-    padding: 24,
+  sheet: {
+    width: '100%',
+    height: '33%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 16,
   },
-  modalButtonRow: {
+  sheetButtonRow: {
     flexDirection: 'row',
     gap: 12,
   },
-  modalButton: {
+  sheetButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
-  modalButtonSecondary: {
+  sheetButtonSecondary: {
     backgroundColor: '#687076',
   },
 });
