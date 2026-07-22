@@ -30,9 +30,6 @@ const MOCK_ALLOWED_APPS: AllowedApp[] = [
   { id: '5', name: 'Notes', icon: require('@/assets/images/partial-react-logo.png') },
   { id: '6', name: 'Calendar', icon: require('@/assets/images/android-icon-foreground.png') },
 ];
-const VISIBLE_ALLOWED_APPS = MOCK_ALLOWED_APPS.slice(0, 3);
-const HIDDEN_ALLOWED_APPS_COUNT = MOCK_ALLOWED_APPS.length - VISIBLE_ALLOWED_APPS.length;
-
 const DURATION_PRESETS = [15, 25, 45, 60];
 
 function formatTime(totalSeconds: number): string {
@@ -56,6 +53,12 @@ export default function HomeScreen() {
   const [mode, setMode] = useState<FocusMode>('stopwatch');
   const [durationMinutes, setDurationMinutes] = useState(25);
   const [modePickerVisible, setModePickerVisible] = useState(false);
+  const [selectedAppIds, setSelectedAppIds] = useState<string[]>(MOCK_ALLOWED_APPS.map((app) => app.id));
+  const [appPickerVisible, setAppPickerVisible] = useState(false);
+
+  const selectedApps = MOCK_ALLOWED_APPS.filter((app) => selectedAppIds.includes(app.id));
+  const visibleApps = selectedApps.slice(0, 3);
+  const hiddenAppsCount = selectedApps.length - visibleApps.length;
 
   const handleCancel = () => {
     setConfirmVisible(false);
@@ -73,6 +76,16 @@ export default function HomeScreen() {
   const handleSelectDuration = (minutes: number) => {
     setDurationMinutes(minutes);
     setModePickerVisible(false);
+  };
+
+  const handleCancelAppPicker = () => {
+    setAppPickerVisible(false);
+  };
+
+  const toggleApp = (id: string) => {
+    setSelectedAppIds((current) =>
+      current.includes(id) ? current.filter((appId) => appId !== id) : [...current, id]
+    );
   };
 
   const handleStartSession = () => {
@@ -142,9 +155,9 @@ export default function HomeScreen() {
 
               <Pressable
                 style={[styles.card, { backgroundColor: surfaceColor }]}
-                onPress={() => console.log('Open app picker', MOCK_ALLOWED_APPS)}>
+                onPress={() => setAppPickerVisible(true)}>
                 <View style={styles.appStack}>
-                  {VISIBLE_ALLOWED_APPS.map((app, index) => (
+                  {visibleApps.map((app, index) => (
                     <Image
                       key={app.id}
                       source={app.icon}
@@ -154,9 +167,9 @@ export default function HomeScreen() {
                       ]}
                     />
                   ))}
-                  {HIDDEN_ALLOWED_APPS_COUNT > 0 && (
+                  {hiddenAppsCount > 0 && (
                     <View style={styles.appCountBadge}>
-                      <ThemedText style={styles.appCountBadgeText}>+{HIDDEN_ALLOWED_APPS_COUNT}</ThemedText>
+                      <ThemedText style={styles.appCountBadgeText}>+{hiddenAppsCount}</ThemedText>
                     </View>
                   )}
                 </View>
@@ -224,6 +237,46 @@ export default function HomeScreen() {
                 ))}
               </View>
             )}
+          </ThemedView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={appPickerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={handleCancelAppPicker}>
+        <View style={styles.sheetWrapper}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleCancelAppPicker} />
+          <ThemedView style={[styles.sheet, { backgroundColor: sheetBackground }]}>
+            <View style={styles.dragHandle} />
+
+            <ThemedText type="subtitle" style={styles.sheetTitle}>
+              Allowed Apps
+            </ThemedText>
+
+            {MOCK_ALLOWED_APPS.map((app) => {
+              const selected = selectedAppIds.includes(app.id);
+              return (
+                <Pressable
+                  key={app.id}
+                  style={[styles.appRow, { backgroundColor: surfaceColor }]}
+                  onPress={() => toggleApp(app.id)}>
+                  <View style={styles.appRowLeft}>
+                    <Image source={app.icon} style={styles.appRowIcon} />
+                    <ThemedText style={styles.cardHeaderText}>{app.name}</ThemedText>
+                  </View>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      selected && { backgroundColor: tint, borderColor: tint },
+                      !selected && { borderColor: mutedColor },
+                    ]}>
+                    {selected && <IconSymbol name="checkmark" size={14} color={onTintColor} />}
+                  </View>
+                </Pressable>
+              );
+            })}
           </ThemedView>
         </View>
       </Modal>
@@ -376,5 +429,31 @@ const styles = StyleSheet.create({
   durationPresetText: {
     fontWeight: '600',
     fontSize: 14,
+  },
+  appRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  appRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  appRowIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
